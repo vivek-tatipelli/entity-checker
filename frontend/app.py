@@ -1,12 +1,20 @@
 import streamlit as st
 import requests
 import json
+import os
 
 # --------------------------------------------------
 # Config
 # --------------------------------------------------
 
-API_URL = "http://localhost:8000/api/analyze"
+BACKEND_URL = os.getenv("BACKEND_URL","")
+
+API_URL = None
+
+if BACKEND_URL:
+    API_URL = f"{BACKEND_URL}/api/analyze"
+else:
+    API_URL = "http://localhost:8000/api/analyze"
 
 st.set_page_config(
     page_title="Entity Checker",
