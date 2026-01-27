@@ -1,0 +1,156 @@
+# ===============================
+# ESSENTIAL (Always recommend)
+# ===============================
+
+- suggest: WebSite
+  confidence: high
+  category: Essential
+  reason: "Recommended for all websites"
+  when:
+    missing_schema: WebSite
+
+- suggest: WebPage
+  confidence: high
+  category: Essential
+  reason: "Defines the current page"
+  when:
+    missing_schema: WebPage
+
+- suggest: Organization
+  confidence: high
+  category: Essential
+  reason: "Identifies the organization behind the site"
+  when:
+    missing_schema: Organization
+
+- suggest: SearchAction
+  confidence: medium
+  category: Essential
+  reason: "Improves site search visibility"
+  when:
+    missing_schema: SearchAction
+
+# ===============================
+# CONTENT / PUBLISHING
+# ===============================
+
+- suggest: Article
+  confidence: medium
+  category: Content
+  reason: "Long-form text content detected"
+  when:
+    signal.content.long_form_content: true
+
+- suggest: BlogPosting
+  confidence: medium
+  category: Content
+  reason: "Blog-style content inferred"
+  when:
+    signal.content.long_form_content: true
+
+- suggest: NewsArticle
+  confidence: low
+  category: Content
+  reason: "Article-like content with headlines"
+  when:
+    signal.content.multiple_h1: false
+
+- suggest: FAQPage
+  confidence: high
+  category: Content
+  reason: "FAQ-style content detected"
+  when:
+    signal.content.faq_like_content: true
+
+- suggest: HowTo
+  confidence: medium
+  category: Content
+  reason: "Step-by-step instructional content inferred"
+  when:
+    signal.content.very_long_content: true
+
+# ===============================
+# MEDIA
+# ===============================
+
+- suggest: VideoObject
+  confidence: medium
+  category: Media
+  reason: "Embedded video detected"
+  when:
+    signal.media.youtube_embedded: true
+
+- suggest: ImageObject
+  confidence: low
+  category: Media
+  reason: "Image-heavy content detected"
+  when:
+    signal.media.image_rich: true
+
+# ===============================
+# NAVIGATION / UX
+# ===============================
+
+- suggest: BreadcrumbList
+  confidence: medium
+  category: Navigation
+  reason: "Breadcrumb structure detected"
+  when:
+    signal.structured_data_hints.json_ld_present: true
+
+- suggest: SiteNavigationElement
+  confidence: low
+  category: Navigation
+  reason: "Navigation menu detected"
+  when:
+    signal.content.navigation_detected: true
+
+# ===============================
+# LOCAL / BUSINESS
+# ===============================
+
+- suggest: LocalBusiness
+  confidence: medium
+  category: Local
+  reason: "Organization with address/contact signals detected"
+  when:
+    signal.local.contact_present: true
+
+- suggest: Place
+  confidence: low
+  category: Local
+  reason: "Location-related content detected"
+  when:
+    signal.local.address_present: true
+
+# ===============================
+# ECOMMERCE
+# ===============================
+
+- suggest: Product
+  confidence: high
+  category: Ecommerce
+  reason: "Product-related signals detected"
+  when:
+    signal.ecommerce.product_detected: true
+
+- suggest: Offer
+  confidence: high
+  category: Ecommerce
+  reason: "Pricing information detected"
+  when:
+    signal.ecommerce.price_detected: true
+
+- suggest: AggregateOffer
+  confidence: medium
+  category: Ecommerce
+  reason: "Multiple price offers detected"
+  when:
+    signal.ecommerce.multi_price_detected: true
+
+- suggest: Review
+  confidence: medium
+  category: Ecommerce
+  reason: "User reviews detected"
+  when:
+    signal.ecommerce.review_detected: true

@@ -1,0 +1,15 @@
+content:
+  article_word_threshold: 600
+  faq_keywords:
+    - faq
+    - faqs
+    - questions
+    - answers
+    - help
+    - support
+
+media:
+  video_domains:
+    - youtube.com
+    - youtu.be
+    - youtube-nocookie.com
