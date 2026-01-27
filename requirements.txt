@@ -6,3 +6,4 @@ lxml
 pydantic
 streamlit
 requests
+PyYAML
