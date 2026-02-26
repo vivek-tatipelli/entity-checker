@@ -47,12 +47,15 @@ def extract_metadata(html: str) -> dict:
     meta_desc = meta_desc.get("content").strip() if meta_desc else None
 
     json_ld = []
-    for script in soup.find_all("script", type="application/ld+json"):
-        try:
-            if script.string:
-                json_ld.append(json.loads(script.string))
-        except Exception:
-            continue
+
+    for script in soup.find_all("script"):
+        t = script.get("type", "")
+        if "ld+json" in t.lower():
+            try:
+                if script.string:
+                    json_ld.append(json.loads(script.string))
+            except Exception:
+                continue
 
     return {
         "title": title,
@@ -105,33 +108,68 @@ def extract_entities(text: str, metadata: dict, url: str) -> dict:
 async def extract_page(url: str) -> dict:
     logger.info(f"Fetching: {url}")
 
-    html = fetch_static(url)
+    html = None
     fetch_mode = "static"
 
-    if html:
-        text = extract_visible_text(html)
-        if not is_js_shell(text):
-            metadata = extract_metadata(html)
-        else:
-            html = None
+    # -----------------------------
+    # 1️⃣ STATIC FETCH (with retry)
+    # -----------------------------
+    for attempt in range(2):
+        html = fetch_static(url)
 
+        if not html:
+            continue
+
+        text = extract_visible_text(html)
+        metadata = extract_metadata(html)
+
+        has_structured = metadata.get("json_ld_count", 0) > 0
+        sufficient_text = len(text) >= MIN_VISIBLE_TEXT
+
+        logger.info(
+            f"[STATIC attempt {attempt+1}] "
+            f"text={len(text)} "
+            f"jsonld={metadata.get('json_ld_count')} "
+        )
+
+        # Accept only if BOTH are good
+        if sufficient_text and has_structured:
+            logger.info("✅ Static version accepted")
+            break
+
+        html = None  # Force retry or fallback
+
+    # -----------------------------
+    # 2️⃣ DYNAMIC FALLBACK
+    # -----------------------------
     if not html:
         fetch_mode = "dynamic"
+        logger.info("⚠️ Falling back to dynamic rendering")
+
         loop = asyncio.get_running_loop()
         html = await loop.run_in_executor(
             None,
             fetch_dynamic_sync,
             url
         )
+
         text = extract_visible_text(html)
         metadata = extract_metadata(html)
 
+        logger.info(
+            f"[DYNAMIC] text={len(text)} "
+            f"jsonld={metadata.get('json_ld_count')}"
+        )
+
+    # -----------------------------
+    # 3️⃣ ENTITY EXTRACTION
+    # -----------------------------
     entities = extract_entities(text, metadata, url)
 
     return {
         "url": url,
         "fetch_mode": fetch_mode,
-        "html" : html,
+        "html": html,
         "text_length": len(text),
         "visible_text": text,
         "metadata": metadata,

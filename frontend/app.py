@@ -324,7 +324,6 @@ for url, page in st.session_state.results.items():
                 st.info("No structured data found.")
             else:
                 for schema, block in entities.items():
-
                     with st.expander(schema):
                         st.json(block["items"])
 
@@ -339,44 +338,29 @@ for url, page in st.session_state.results.items():
 
                     st.markdown(f"### {category}")
 
-                    for s in items:
-
+                    for idx, s in enumerate(items):
                         schema_name = s["schema"]
-                        key = f"{url}_{schema_name}"
+                        key = f"{url}_{category}_{schema_name}_{idx}"
 
                         with st.expander(schema_name):
-
                             st.write(s["reason"])
-
                             if key not in st.session_state.schemas:
 
-                                if st.button(
-                                    "Generate Schema",
-                                    key=key
-                                ):
-
-                                    schema = generate_schema(
-                                        schema_name,
-                                        entities,
-                                        signals,
-                                        url
-                                    )
+                                if st.button("Generate Schema",key=key):
+                                    schema = generate_schema(schema_name, entities, signals, url)
 
                                     if schema:
                                         st.session_state.schemas[key] = schema
 
                             if key in st.session_state.schemas:
-                                st.code(
-                                    json.dumps(
+                                st.code(json.dumps(
                                         st.session_state.schemas[key],
                                         indent=2,
                                         ensure_ascii=False
-                                    ),
-                                    language="json"
+                                    ),language="json"
                                 )
 
 
-        # PAGE EXPORT
         with st.expander("📦 Export Page Data"):
             st.download_button(
                 "Download Page JSON",
