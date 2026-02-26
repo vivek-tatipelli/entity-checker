@@ -1,12 +1,16 @@
+import asyncio
+import sys
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.analyze import router as analyze_router
+if sys.platform.startswith("win"):
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsProactorEventLoopPolicy()
+    )
 
-# --------------------------------------------------
-# Logging
-# --------------------------------------------------
+from backend.api.analyze import router as analyze_router
+from backend.api.schema import router as schema_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,7 +24,7 @@ logger = logging.getLogger(__name__)
 # --------------------------------------------------
 
 app = FastAPI(
-    title="EntityScope – Phase 1",
+    title="Entity Validator and Schema Generator – Phase 1",
     description=(
         "Single-page entity and structured data analyzer. "
         "Supports JSON-LD, Microdata, RDFa, SEO signals, and schema suggestions."
@@ -48,6 +52,12 @@ app.include_router(
     analyze_router,
     prefix="/api",
     tags=["Analyze"]
+)
+
+app.include_router(
+    schema_router,
+    prefix="/api",
+    tags=["AI Schema Generation"]
 )
 
 # --------------------------------------------------
