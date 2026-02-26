@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
+from playwright_stealth import Stealth
 
 MAX_HTML_SIZE = 5_000_000
 MIN_VISIBLE_TEXT = 300
@@ -104,7 +104,8 @@ def fetch_dynamic_sync(url: str) -> str:
             "Accept-Language": "en-US,en;q=0.9"
         })
 
-        stealth_sync(page)
+        stealth = Stealth()
+        stealth.apply_stealth_sync(page)
 
         page.goto(url, wait_until="domcontentloaded", timeout=60000)
 
