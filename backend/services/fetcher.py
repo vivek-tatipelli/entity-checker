@@ -4,13 +4,14 @@ import re
 import json
 from collections import Counter
 from urllib.parse import urlparse
+import os
 
 import requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
 
-MAX_HTML_SIZE = 5_000_000
+MAX_HTML_SIZE = 50_000_000
 MIN_VISIBLE_TEXT = 300
 REQUEST_TIMEOUT = 20
 
@@ -74,7 +75,27 @@ def is_js_shell(text: str) -> bool:
     return len(text) < MIN_VISIBLE_TEXT
 
 
+SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
+
 def fetch_static(url: str) -> str | None:
+    try:
+        proxy_url = "http://api.scraperapi.com"
+
+        params = {
+            "api_key": SCRAPER_API_KEY,
+            "url": url,
+        }
+
+        r = requests.get(proxy_url, params=params, timeout=20)
+        r.raise_for_status()
+        return r.text
+
+    except Exception as e:
+        logger.warning(f"ScraperAPI fetch failed: {e}")
+        return None
+
+
+'''def fetch_static(url: str) -> str | None:
     try:
         r = requests.get(
             url,
@@ -115,7 +136,7 @@ def fetch_dynamic_sync(url: str) -> str:
         html = page.content()
         browser.close()
 
-        return html[:MAX_HTML_SIZE]
+        return html[:MAX_HTML_SIZE]'''
 
 
 def extract_entities(text: str, metadata: dict, url: str) -> dict:
@@ -133,7 +154,7 @@ def extract_entities(text: str, metadata: dict, url: str) -> dict:
     return entities
 
 
-async def extract_page(url: str) -> dict:
+'''async def extract_page(url: str) -> dict:
     logger.info(f"Fetching: {url}")
 
     html = None
@@ -204,3 +225,42 @@ async def extract_page(url: str) -> dict:
         "entities": entities,
     }
 
+'''
+
+async def extract_page(url: str) -> dict:
+    logger.info(f"Fetching via ScraperAPI: {url}")
+
+    html = fetch_static(url)
+
+    if not html:
+        logger.error("❌ Failed to fetch page")
+        return {
+            "url": url,
+            "fetch_mode": "failed",
+            "html": None,
+            "text_length": 0,
+            "visible_text": "",
+            "metadata": {},
+            "entities": {}
+        }
+
+    text = extract_visible_text(html)
+    metadata = extract_metadata(html)
+
+    logger.info(
+        f"[SCRAPERAPI] text={len(text)} "
+        f"jsonld={metadata.get('json_ld_count')} "
+        f"html_size={len(html)}"
+    )
+
+    entities = extract_entities(text, metadata, url)
+
+    return {
+        "url": url,
+        "fetch_mode": "scraperapi",
+        "html": html,
+        "text_length": len(text),
+        "visible_text": text,
+        "metadata": metadata,
+        "entities": entities,
+    }
